@@ -16,7 +16,6 @@ jobs:
         with:
           toolchain: stable
           override: true
-          target: bpfel-unknown-none
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
