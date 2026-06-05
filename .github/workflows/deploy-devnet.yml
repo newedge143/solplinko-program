@@ -90,7 +90,7 @@ jobs:
       - name: Build Anchor program
         run: |
           export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
-          anchor build 2>&1
+          anchor build -- --locked 2>&1
 
       - name: Deploy to devnet
         run: |

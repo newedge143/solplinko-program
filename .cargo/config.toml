@@ -1,7 +1,2 @@
 [net]
 offline = false
-
-[build]
-# Force --locked so cargo never upgrades Cargo.lock from v3 to v4.
-# Required because Solana 1.18.26's BPF cargo cannot parse lockfile v4.
-locked = true
