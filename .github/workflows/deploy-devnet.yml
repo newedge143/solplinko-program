@@ -90,7 +90,12 @@ jobs:
       - name: Build Anchor program
         run: |
           export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
-          anchor build
+          echo "PATH=$PATH"
+          which anchor || echo "anchor not in PATH"
+          ls ~/.avm/bin/ || echo "no ~/.avm/bin"
+          ls ~/.cargo/bin/anchor* 2>/dev/null || echo "no anchor in cargo bin"
+          anchor --version || true
+          anchor build 2>&1
 
       - name: Deploy to devnet
         run: |
