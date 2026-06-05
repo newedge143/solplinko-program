@@ -18,3 +18,4 @@ default = []
 [dependencies]
 anchor-lang = {git = "https://github.com/otter-sec/anchor", tag = "v0.23.0", features = ["init-if-needed"]}
 anchor-spl = {git = "https://github.com/otter-sec/anchor", tag = "v0.23.0"}
+getrandom = { version = "=0.2.5", features = ["custom"] }
