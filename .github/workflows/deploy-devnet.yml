@@ -84,6 +84,13 @@ jobs:
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
+      - name: Create cargo-build-bpf shim
+        run: |
+          # anchor 0.23.0 calls cargo build-bpf; Agave 4.x only has build-sbf
+          printf '#!/bin/bash\nexec cargo-build-sbf "$@"\n' | sudo tee /usr/local/bin/cargo-build-bpf > /dev/null
+          sudo chmod +x /usr/local/bin/cargo-build-bpf
+          echo "Shim ready: $(cargo-build-bpf --version 2>&1 || true)"
+
       - name: Build Anchor program
         run: |
           export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
