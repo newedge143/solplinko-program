@@ -25,12 +25,12 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-agave2-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-agave2-
+          key: ${{ runner.os }}-cargo-agave4-locked-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-agave4-locked-
 
-      - name: Install Agave (Solana 2.0.3)
+      - name: Install Agave (Solana 4.0.1)
         run: |
-          curl -fsSL https://github.com/anza-xyz/agave/releases/download/v2.0.3/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
+          curl -fsSL https://github.com/anza-xyz/agave/releases/download/v4.0.1/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
             -o /tmp/solana.tar.bz2
           tar -xjf /tmp/solana.tar.bz2 -C /tmp
           sudo mv /tmp/solana-release/bin/* /usr/local/bin/
@@ -68,7 +68,7 @@ jobs:
         run: |
           export PATH="/usr/local/bin:/home/runner/.cargo/bin:$PATH"
           echo "Using: $(cargo build-sbf --version 2>&1 || cargo-build-sbf --version 2>&1 || true)"
-          cargo build-sbf --manifest-path programs/sae-games/Cargo.toml 2>&1
+          cargo build-sbf --manifest-path programs/sae-games/Cargo.toml --locked 2>&1
           echo "Built: $(ls -lh target/deploy/*.so 2>/dev/null || echo 'no .so found')"
 
       - name: Deploy to devnet
