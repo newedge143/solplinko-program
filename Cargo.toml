@@ -7,4 +7,4 @@ members = [
 # proc-macro2 1.0.36 has a broken probe that always detects LineColumn as available.
 # 1.0.81 has the fixed probe - correctly detects it's NOT nameable in old Rust.
 # Requires rust_version = 1.56, compatible with our Rust 1.76 build.
-proc-macro2 = { version = "=1.0.81" }
+proc-macro2 = { git = "https://github.com/dtolnay/proc-macro2", tag = "1.0.81" }
