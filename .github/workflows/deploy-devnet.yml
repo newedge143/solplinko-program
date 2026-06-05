@@ -70,7 +70,7 @@ jobs:
           python3 -c "
           import sys
           pid = sys.argv[1]
-          toml = '[toolchain]\nanchor_version = \"0.23.0\"\nsolana_version = \"1.18.26\"\n\n[features]\nseeds = false\n\n[programs.devnet]\nsae_games = \"' + pid + '\"\n\n[registry]\nurl = \"https://anchor.projectserum.com\"\n\n[provider]\ncluster = \"devnet\"\nwallet = \"~/.config/solana/sae-games/program-owner.json\"\n\n[scripts]\ntest = \"yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"\n'
+          toml = '[features]\nseeds = false\n\n[programs.devnet]\nsae_games = \"' + pid + '\"\n\n[registry]\nurl = \"https://anchor.projectserum.com\"\n\n[provider]\ncluster = \"devnet\"\nwallet = \"~/.config/solana/sae-games/program-owner.json\"\n\n[scripts]\ntest = \"yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"\n'
           open('Anchor.toml', 'w').write(toml)
           print('Anchor.toml written for program:', pid)
           " "$PROGRAM_ID"
