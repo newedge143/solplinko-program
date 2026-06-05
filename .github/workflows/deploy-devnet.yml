@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 env:
-  SOLANA_PATH: /home/runner/.local/share/solana/install/active_release/bin
   AVM_PATH: /home/runner/.avm/bin
   CARGO_PATH: /home/runner/.cargo/bin
 
@@ -30,13 +29,12 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          key: ${{ runner.os }}-cargo-agave4-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-agave4-
 
-      - name: Install Solana CLI v1.18.26
+      - name: Install Agave (Solana 4.0.1)
         run: |
-          # Download from GitHub releases (more reliable than release.solana.com)
-          curl -fsSL https://github.com/solana-labs/solana/releases/download/v1.18.26/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
+          curl -fsSL https://github.com/anza-xyz/agave/releases/download/v4.0.1/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
             -o /tmp/solana.tar.bz2
           tar -xjf /tmp/solana.tar.bz2 -C /tmp
           sudo mv /tmp/solana-release/bin/* /usr/local/bin/
@@ -79,20 +77,12 @@ jobs:
 
       - name: Airdrop devnet SOL
         run: |
-          export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
           AUTHORITY="ESq8kD6sWdAGF95YMngcBaUUj5kKAH3H4E935pKpFGDH"
           for i in 1 2 3 4; do
             solana airdrop 2 $AUTHORITY --url devnet || true
             sleep 25
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
-
-      - name: Switch to Rust 1.79.0 for BPF-compatible build
-        run: |
-          export PATH="/home/runner/.cargo/bin:$PATH"
-          rustup install 1.79.0
-          rustup default 1.79.0
-          cargo --version
 
       - name: Build Anchor program
         run: |
