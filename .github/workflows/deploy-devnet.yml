@@ -19,9 +19,9 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libudev-dev pkg-config build-essential
 
-      - name: Install Rust 1.76.0
+      - name: Install Rust stable
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.76.0
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Cache Cargo registry
@@ -87,14 +87,16 @@ jobs:
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
+      - name: Switch to Rust 1.76.0 for BPF-compatible build
+        run: |
+          export PATH="/home/runner/.cargo/bin:$PATH"
+          rustup install 1.76.0
+          rustup default 1.76.0
+          cargo --version
+
       - name: Build Anchor program
         run: |
           export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
-          echo "PATH=$PATH"
-          which anchor || echo "anchor not in PATH"
-          ls ~/.avm/bin/ || echo "no ~/.avm/bin"
-          ls ~/.cargo/bin/anchor* 2>/dev/null || echo "no anchor in cargo bin"
-          anchor --version || true
           anchor build 2>&1
 
       - name: Deploy to devnet
