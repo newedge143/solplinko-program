@@ -2,3 +2,7 @@
 members = [
     "programs/*"
 ]
+
+[patch.crates-io]
+# getrandom must use "custom" feature for BPF/SBF target (Solana)
+getrandom = { version = "0.2", features = ["custom"] }
