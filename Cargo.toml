@@ -3,8 +3,4 @@ members = [
     "programs/*"
 ]
 
-[patch.crates-io]
-# proc-macro2 1.0.36 uses proc_macro::LineColumn which is not stable in
-# Agave 4.x platform-tools Rust. Pin to 1.0.24 which predates that code.
-proc-macro2 = { git = "https://github.com/dtolnay/proc-macro2", tag = "1.0.24" }
 
