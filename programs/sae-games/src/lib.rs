@@ -1,11 +1,3 @@
-// Custom getrandom for Solana BPF target (getrandom 0.2 with "custom" feature)
-// getrandom 0.2 custom.rs uses extern "Rust", so no extern "C" needed
-#[no_mangle]
-fn __getrandom_custom(dest: *mut u8, len: usize) -> u32 {
-    unsafe { core::ptr::write_bytes(dest, 0, len); }
-    0 // 0 = success
-}
-
 pub mod errors;
 pub mod utils;
 pub mod fee;
