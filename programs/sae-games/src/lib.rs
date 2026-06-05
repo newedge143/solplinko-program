@@ -1,9 +1,9 @@
 // Custom getrandom for Solana BPF target (getrandom 0.2 with "custom" feature)
+// getrandom 0.2 custom.rs uses extern "Rust", so no extern "C" needed
 #[no_mangle]
-unsafe extern "C" fn __getrandom_custom(dest: *mut u8, len: usize) -> u32 {
-    // Fill with zeros for devnet (deterministic); on-chain entropy not needed here
-    unsafe { std::ptr::write_bytes(dest, 0, len); }
-    0 // success
+fn __getrandom_custom(dest: *mut u8, len: usize) -> u32 {
+    unsafe { core::ptr::write_bytes(dest, 0, len); }
+    0 // 0 = success
 }
 
 pub mod errors;
