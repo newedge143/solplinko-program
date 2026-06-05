@@ -87,11 +87,11 @@ jobs:
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
-      - name: Switch to Rust 1.77.0 for BPF-compatible build
+      - name: Switch to Rust 1.79.0 for BPF-compatible build
         run: |
           export PATH="/home/runner/.cargo/bin:$PATH"
-          rustup install 1.77.0
-          rustup default 1.77.0
+          rustup install 1.79.0
+          rustup default 1.79.0
           cargo --version
 
       - name: Build Anchor program
