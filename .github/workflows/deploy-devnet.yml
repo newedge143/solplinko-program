@@ -3,10 +3,6 @@ name: Deploy to Devnet
 on:
   workflow_dispatch:
 
-env:
-  AVM_PATH: /home/runner/.avm/bin
-  CARGO_PATH: /home/runner/.cargo/bin
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -38,20 +34,12 @@ jobs:
             -o /tmp/solana.tar.bz2
           tar -xjf /tmp/solana.tar.bz2 -C /tmp
           sudo mv /tmp/solana-release/bin/* /usr/local/bin/
-          echo "Solana version: $(solana --version)"
-
-      - name: Install Anchor 0.23.0 via AVM
-        run: |
-          export PATH="/home/runner/.cargo/bin:$PATH"
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
-          avm install 0.23.0
-          avm use 0.23.0
-          echo "/home/runner/.avm/bin" >> $GITHUB_PATH
+          solana --version
+          cargo-build-sbf --version 2>/dev/null || echo "cargo-build-sbf not in /usr/local/bin"
+          ls /usr/local/bin/cargo-build* 2>/dev/null || true
 
       - name: Setup wallets and generate program keypair
         run: |
-          export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
           mkdir -p ~/.config/solana/sae-games target/deploy
 
           echo '[24,166,229,1,209,97,71,192,154,38,207,91,102,172,139,220,202,172,49,155,169,232,57,147,2,90,236,13,246,79,204,119,199,197,224,1,246,118,8,116,249,6,177,30,141,141,121,135,83,176,96,23,1,139,103,197,111,9,253,247,183,64,79,4]' \
@@ -67,14 +55,6 @@ jobs:
 
           sed -i "s/declare_id!(\"PUBKEY\")/declare_id!(\"$PROGRAM_ID\")/" programs/sae-games/src/lib.rs
 
-          python3 -c "
-          import sys
-          pid = sys.argv[1]
-          toml = '[toolchain]\nanchor_version = \"0.23.0\"\n\n[features]\nseeds = false\n\n[programs.devnet]\nsae_games = \"' + pid + '\"\n\n[registry]\nurl = \"https://anchor.projectserum.com\"\n\n[provider]\ncluster = \"devnet\"\nwallet = \"~/.config/solana/sae-games/program-owner.json\"\n\n[scripts]\ntest = \"yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"\n'
-          open('Anchor.toml', 'w').write(toml)
-          print('Anchor.toml written for program:', pid)
-          " "$PROGRAM_ID"
-
       - name: Airdrop devnet SOL
         run: |
           AUTHORITY="ESq8kD6sWdAGF95YMngcBaUUj5kKAH3H4E935pKpFGDH"
@@ -84,22 +64,21 @@ jobs:
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
-      - name: Create cargo-build-bpf shim
+      - name: Build Solana program (cargo-build-sbf)
         run: |
-          # anchor 0.23.0 calls cargo build-bpf; Agave 4.x only has build-sbf
-          printf '#!/bin/bash\nexec cargo-build-sbf "$@"\n' | sudo tee /usr/local/bin/cargo-build-bpf > /dev/null
-          sudo chmod +x /usr/local/bin/cargo-build-bpf
-          echo "Shim ready: $(cargo-build-bpf --version 2>&1 || true)"
-
-      - name: Build Anchor program
-        run: |
-          export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
-          anchor build 2>&1
+          export PATH="/usr/local/bin:/home/runner/.cargo/bin:$PATH"
+          echo "Using: $(cargo build-sbf --version 2>&1 || cargo-build-sbf --version 2>&1 || true)"
+          cargo build-sbf --manifest-path programs/sae-games/Cargo.toml 2>&1
+          echo "Built: $(ls -lh target/deploy/*.so 2>/dev/null || echo 'no .so found')"
 
       - name: Deploy to devnet
         run: |
-          export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
-          anchor deploy --provider.cluster devnet
+          export PATH="/usr/local/bin:/home/runner/.cargo/bin:$PATH"
+          solana program deploy target/deploy/sae_games.so \
+            --keypair target/deploy/sae_games-keypair.json \
+            --url devnet \
+            --upgrade-authority ~/.config/solana/sae-games/program-owner.json \
+            --fee-payer ~/.config/solana/sae-games/program-owner.json
           echo "=============================="
           echo "DEPLOYED PROGRAM ID: $PROGRAM_ID"
           echo "=============================="
