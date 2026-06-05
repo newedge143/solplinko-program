@@ -4,9 +4,11 @@ members = [
 ]
 
 [patch.crates-io]
-# Platform-tools BPF rustc lacks proc_macro::LineColumn; use pre-LineColumn versions
+# Platform-tools BPF rustc lacks proc_macro::LineColumn; pin to pre-LineColumn versions
 proc-macro2 = { git = "https://github.com/dtolnay/proc-macro2", tag = "1.0.24" }
-# quote 1.0.12+ requires proc-macro2 ^1.0.36; use 1.0.11 which only needs ^1.0.20
+# quote 1.0.12+ requires proc-macro2 ^1.0.36; 1.0.11 only needs ^1.0.20
 quote = { git = "https://github.com/dtolnay/quote", tag = "1.0.11" }
+# syn 1.0.68+ requires proc-macro2 ^1.0.26; 1.0.65 only needs ^1.0.23
+syn = { git = "https://github.com/dtolnay/syn", tag = "1.0.65" }
 
 
