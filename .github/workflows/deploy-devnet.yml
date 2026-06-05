@@ -14,9 +14,9 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libudev-dev pkg-config build-essential
 
-      - name: Install Rust stable
+      - name: Install Rust 1.76 (generates v3 lockfile, avoids v4)
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.76.0
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Cache Cargo registry
@@ -25,21 +25,20 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-agave4-locked-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-agave4-locked-
+          key: ${{ runner.os }}-cargo-sol1-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-sol1-
 
-      - name: Install Agave (Solana 4.0.1)
+      - name: Install Solana 1.18.26
         run: |
-          curl -fsSL https://github.com/anza-xyz/agave/releases/download/v4.0.1/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
+          curl -fsSL https://github.com/solana-labs/solana/releases/download/v1.18.26/solana-release-x86_64-unknown-linux-gnu.tar.bz2 \
             -o /tmp/solana.tar.bz2
           tar -xjf /tmp/solana.tar.bz2 -C /tmp
           sudo mv /tmp/solana-release/bin/* /usr/local/bin/
-          solana --version
-          cargo-build-sbf --version 2>/dev/null || echo "cargo-build-sbf not in /usr/local/bin"
-          ls /usr/local/bin/cargo-build* 2>/dev/null || true
+          echo "Solana: $(solana --version)"
 
       - name: Setup wallets and generate program keypair
         run: |
+          export PATH="/home/runner/.cargo/bin:$PATH"
           mkdir -p ~/.config/solana/sae-games target/deploy
 
           echo '[24,166,229,1,209,97,71,192,154,38,207,91,102,172,139,220,202,172,49,155,169,232,57,147,2,90,236,13,246,79,204,119,199,197,224,1,246,118,8,116,249,6,177,30,141,141,121,135,83,176,96,23,1,139,103,197,111,9,253,247,183,64,79,4]' \
@@ -64,10 +63,9 @@ jobs:
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
-      - name: Build Solana program (cargo-build-sbf)
+      - name: Build Solana program
         run: |
           export PATH="/usr/local/bin:/home/runner/.cargo/bin:$PATH"
-          echo "Using: $(cargo build-sbf --version 2>&1 || cargo-build-sbf --version 2>&1 || true)"
           cargo build-sbf --manifest-path programs/sae-games/Cargo.toml 2>&1
           echo "Built: $(ls -lh target/deploy/*.so 2>/dev/null || echo 'no .so found')"
 
