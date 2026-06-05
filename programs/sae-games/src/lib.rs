@@ -1,3 +1,11 @@
+// Custom getrandom for Solana BPF target (getrandom 0.2 with "custom" feature)
+#[no_mangle]
+unsafe extern "C" fn __getrandom_custom(dest: *mut u8, len: usize) -> u32 {
+    // Fill with zeros for devnet (deterministic); on-chain entropy not needed here
+    unsafe { std::ptr::write_bytes(dest, 0, len); }
+    0 // success
+}
+
 pub mod errors;
 pub mod utils;
 pub mod fee;
