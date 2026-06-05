@@ -3,96 +3,100 @@ name: Deploy to Devnet
 on:
   workflow_dispatch:
 
+env:
+  SOLANA_PATH: /home/runner/.local/share/solana/install/active_release/bin
+  AVM_PATH: /home/runner/.avm/bin
+  CARGO_PATH: /home/runner/.cargo/bin
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev pkg-config build-essential
 
-      - name: Cache Rust dependencies
+      - name: Install Rust stable
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache Cargo registry
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libudev-dev pkg-config
 
       - name: Install Solana CLI v1.18.26
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Install Anchor 0.23.0 via AVM
         run: |
+          export PATH="/home/runner/.cargo/bin:$PATH"
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          export PATH="/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
           avm install 0.23.0
           avm use 0.23.0
-          echo "$HOME/.avm/bin" >> $GITHUB_PATH
+          echo "/home/runner/.avm/bin" >> $GITHUB_PATH
 
-      - name: Setup authority keypair
+      - name: Setup wallets and generate program keypair
         run: |
-          mkdir -p ~/.config/solana/sae-games
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
+          mkdir -p ~/.config/solana/sae-games target/deploy
+
           echo '[24,166,229,1,209,97,71,192,154,38,207,91,102,172,139,220,202,172,49,155,169,232,57,147,2,90,236,13,246,79,204,119,199,197,224,1,246,118,8,116,249,6,177,30,141,141,121,135,83,176,96,23,1,139,103,197,111,9,253,247,183,64,79,4]' \
             > ~/.config/solana/sae-games/program-owner.json
+
           solana config set --url devnet --keypair ~/.config/solana/sae-games/program-owner.json
           echo "Authority: $(solana address)"
 
-      - name: Generate program keypair and patch source
-        run: |
-          mkdir -p target/deploy
           solana-keygen new --no-bip39-passphrase --outfile target/deploy/sae_games-keypair.json --force
           PROGRAM_ID=$(solana-keygen pubkey target/deploy/sae_games-keypair.json)
           echo "PROGRAM_ID=$PROGRAM_ID" >> $GITHUB_ENV
           echo "Generated program ID: $PROGRAM_ID"
 
-          # Patch declare_id! in lib.rs
           sed -i "s/declare_id!(\"PUBKEY\")/declare_id!(\"$PROGRAM_ID\")/" programs/sae-games/src/lib.rs
 
-          # Write Anchor.toml for devnet without heredoc
           python3 -c "
           import sys
-          program_id = sys.argv[1]
-          content = '[features]\nseeds = false\n\n[programs.devnet]\nsae_games = \"' + program_id + '\"\n\n[registry]\nurl = \"https://anchor.projectserum.com\"\n\n[provider]\ncluster = \"devnet\"\nwallet = \"~/.config/solana/sae-games/program-owner.json\"\n\n[scripts]\ntest = \"yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"\n'
-          open('Anchor.toml', 'w').write(content)
+          pid = sys.argv[1]
+          toml = '[features]\nseeds = false\n\n[programs.devnet]\nsae_games = \"' + pid + '\"\n\n[registry]\nurl = \"https://anchor.projectserum.com\"\n\n[provider]\ncluster = \"devnet\"\nwallet = \"~/.config/solana/sae-games/program-owner.json\"\n\n[scripts]\ntest = \"yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"\n'
+          open('Anchor.toml', 'w').write(toml)
+          print('Anchor.toml written for program:', pid)
           " "$PROGRAM_ID"
 
-      - name: Airdrop devnet SOL to authority
+      - name: Airdrop devnet SOL
         run: |
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           AUTHORITY="ESq8kD6sWdAGF95YMngcBaUUj5kKAH3H4E935pKpFGDH"
-          # Try multiple airdrops with delays for rate limiting
           for i in 1 2 3 4; do
             solana airdrop 2 $AUTHORITY --url devnet || true
-            sleep 20
+            sleep 25
           done
-          BALANCE=$(solana balance $AUTHORITY --url devnet)
-          echo "Authority balance: $BALANCE"
+          echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
       - name: Build Anchor program
         run: |
-          anchor build 2>&1
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
+          anchor build
 
       - name: Deploy to devnet
         run: |
-          anchor deploy --provider.cluster devnet 2>&1
-          echo ""
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:/home/runner/.avm/bin:/home/runner/.cargo/bin:$PATH"
+          anchor deploy --provider.cluster devnet
           echo "=============================="
           echo "DEPLOYED PROGRAM ID: $PROGRAM_ID"
           echo "=============================="
 
-      - name: Save program keypair as artifact
+      - name: Save program keypair
         uses: actions/upload-artifact@v4
         with:
           name: sae-games-devnet-keypair
