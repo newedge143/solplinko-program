@@ -63,16 +63,11 @@ jobs:
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
-      - name: Debug SDK path
+      - name: Build Solana program
         run: |
-          echo "SBF SDK contents:"
-          ls /usr/local/bin/sdk/sbf/ 2>/dev/null || echo "no sbf dir"
-          echo "Platform tools:"
-          ls /usr/local/bin/sdk/sbf/dependencies/ 2>/dev/null | head -10 || echo "no dependencies dir"
-          echo "Getrandom in platform-tools:"
-          find /usr/local/bin/sdk/sbf -name "*getrandom*" 2>/dev/null | head -10 || echo "none"
-          echo "Cargo.toml in platform-tools:"
-          find /usr/local/bin/sdk/sbf -name "Cargo.toml" 2>/dev/null | head -5 || echo "none"
+          export PATH="/usr/local/bin:/home/runner/.cargo/bin:$PATH"
+          cargo build-sbf --manifest-path programs/sae-games/Cargo.toml 2>&1
+          echo "Built: $(ls -lh target/deploy/*.so 2>/dev/null || echo 'no .so found')"
 
       - name: Build Solana program
         run: |

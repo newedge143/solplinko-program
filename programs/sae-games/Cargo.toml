@@ -18,3 +18,6 @@ default = []
 [dependencies]
 anchor-lang = {git = "https://github.com/otter-sec/anchor", tag = "v0.23.0", features = ["init-if-needed"]}
 anchor-spl = {git = "https://github.com/otter-sec/anchor", tag = "v0.23.0"}
+# ahash 0.7.x uses getrandom at runtime which fails on BPF target.
+# compile-time-rng generates keys at compile time (no runtime getrandom needed).
+ahash = { version = "0.7", default-features = false, features = ["compile-time-rng"] }
