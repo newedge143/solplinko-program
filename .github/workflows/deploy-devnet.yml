@@ -68,7 +68,7 @@ jobs:
         run: |
           export PATH="/usr/local/bin:/home/runner/.cargo/bin:$PATH"
           echo "Using: $(cargo build-sbf --version 2>&1 || cargo-build-sbf --version 2>&1 || true)"
-          cargo build-sbf --manifest-path programs/sae-games/Cargo.toml --locked 2>&1
+          cargo build-sbf --manifest-path programs/sae-games/Cargo.toml -- --locked 2>&1
           echo "Built: $(ls -lh target/deploy/*.so 2>/dev/null || echo 'no .so found')"
 
       - name: Deploy to devnet
