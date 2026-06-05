@@ -4,8 +4,10 @@ members = [
 ]
 
 [patch.crates-io]
-# Platform-tools BPF rustc lacks proc_macro::LineColumn; pin to pre-LineColumn versions
-proc-macro2 = { git = "https://github.com/dtolnay/proc-macro2", tag = "1.0.24" }
+# Agave 4.x BPF platform-tools lack proc_macro::LineColumn in their proc_macro crate.
+# Disable the proc-macro wrapper (force pure fallback) by setting default-features=false.
+# The fallback has identical API so anchor macros still work correctly.
+proc-macro2 = { git = "https://github.com/dtolnay/proc-macro2", tag = "1.0.24", default-features = false }
 # quote 1.0.12+ requires proc-macro2 ^1.0.36; 1.0.11 only needs ^1.0.20
 quote = { git = "https://github.com/dtolnay/quote", tag = "1.0.11" }
 # syn 1.0.68+ requires proc-macro2 ^1.0.26; 1.0.65 only needs ^1.0.23
