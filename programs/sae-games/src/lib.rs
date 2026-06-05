@@ -1,3 +1,11 @@
+// Provide custom getrandom impl for Solana BPF target
+// Required when getrandom 0.2 is compiled with --features getrandom/custom
+#[no_mangle]
+fn __getrandom_custom(dest: *mut u8, len: usize) -> u32 {
+    unsafe { core::ptr::write_bytes(dest, 0, len); }
+    0
+}
+
 pub mod errors;
 pub mod utils;
 pub mod fee;

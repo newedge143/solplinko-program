@@ -3,8 +3,3 @@ members = [
     "programs/*"
 ]
 
-[patch.crates-io]
-# ahash 0.8.x dropped getrandom dependency (used by Solana itself).
-# 0.7.x pulled in getrandom which has no BPF target support.
-ahash = { git = "https://github.com/tkaitchuck/ahash", tag = "v0.8.11" }
-
