@@ -65,13 +65,14 @@ jobs:
 
       - name: Debug SDK path
         run: |
-          echo "=== SDK locations ==="
-          ls /usr/local/bin/sdk/ 2>/dev/null | head -5 || echo "no /usr/local/bin/sdk"
-          ls /usr/local/bin/sdk/bpf/ 2>/dev/null | head -10 || echo "no bpf sdk"
-          ls /usr/local/bin/sdk/bpf/dependencies/ 2>/dev/null | head -10 || echo "no dependencies"
-          # Check for getrandom patch
-          find /usr/local/bin/sdk -name "*getrandom*" 2>/dev/null | head -5 || echo "no getrandom in sdk"
-          echo "cargo-build-sbf location: $(which cargo-build-sbf)"
+          echo "SBF SDK contents:"
+          ls /usr/local/bin/sdk/sbf/ 2>/dev/null || echo "no sbf dir"
+          echo "Platform tools:"
+          ls /usr/local/bin/sdk/sbf/dependencies/ 2>/dev/null | head -10 || echo "no dependencies dir"
+          echo "Getrandom in platform-tools:"
+          find /usr/local/bin/sdk/sbf -name "*getrandom*" 2>/dev/null | head -10 || echo "none"
+          echo "Cargo.toml in platform-tools:"
+          find /usr/local/bin/sdk/sbf -name "Cargo.toml" 2>/dev/null | head -5 || echo "none"
 
       - name: Build Solana program
         run: |
