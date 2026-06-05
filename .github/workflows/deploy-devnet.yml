@@ -63,6 +63,16 @@ jobs:
           done
           echo "Balance: $(solana balance $AUTHORITY --url devnet)"
 
+      - name: Debug SDK path
+        run: |
+          echo "=== SDK locations ==="
+          ls /usr/local/bin/sdk/ 2>/dev/null | head -5 || echo "no /usr/local/bin/sdk"
+          ls /usr/local/bin/sdk/bpf/ 2>/dev/null | head -10 || echo "no bpf sdk"
+          ls /usr/local/bin/sdk/bpf/dependencies/ 2>/dev/null | head -10 || echo "no dependencies"
+          # Check for getrandom patch
+          find /usr/local/bin/sdk -name "*getrandom*" 2>/dev/null | head -5 || echo "no getrandom in sdk"
+          echo "cargo-build-sbf location: $(which cargo-build-sbf)"
+
       - name: Build Solana program
         run: |
           export PATH="/usr/local/bin:/home/runner/.cargo/bin:$PATH"
